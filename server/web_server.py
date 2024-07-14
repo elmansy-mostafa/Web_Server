@@ -1,5 +1,6 @@
 
 import socket
+import os
 
 # create a socket object 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,8 +29,29 @@ while True:
     request_line = request_data.splitlines()[0]
     request_path = request_line.split(" ")[1]
     
-    # create the response 
-    response = f"HTTP/1.1 200 OK\r\n\r\nRequested path: {request_path}\r\n"
+    # check if the request path is the root ("/")
+    if request_path == '/':
+        request_path = '/index.html'
+    
+    # cinstructing the file path by www to the requested path
+    file_path = f'www{request_path}'
+    
+    # check if the file exist and not a directory
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        with open(file_path, 'r') as file:
+            response_body = file.read()
+        response = (
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/html; charset=UTF-8\r\n\r\n"
+            f"{response_body}"
+        )
+    else:
+        response = (
+            "HTTP/1.1 404 Not Found\r\n"
+            "Content-Type: text/html; charset=UTF-8\r\n\r\n"
+            "<h1>404 Not Found</h1><p>The requested URL was not found on this server.</p>"
+        )
+
 
     # send the response to the client
     client_socket.sendall(response.encode("utf-8"))
