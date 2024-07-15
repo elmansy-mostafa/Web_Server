@@ -1,7 +1,8 @@
 
 import socket
 import os
-
+import threading
+import time
 def handle_request(client_socket):
     # recieve data from client
     request_data = client_socket.recv(1024).decode("utf-8")
@@ -33,6 +34,10 @@ def handle_request(client_socket):
             "Content-Type: text/html; charset=UTF-8\r\n\r\n"
             "<h1>404 Not Found</h1><p>The requested URL was not found on this server.</p>"
         )
+        
+    # log the thread id and add a delay for testing concurrency
+    print(f"Path: {request_path}, Thread Id: {threading.get_ident()}")
+    time.sleep(20)  # Add a delay to simulate a long processing time
 
     # send the response to the client
     client_socket.sendall(response.encode("utf-8"))
@@ -53,18 +58,22 @@ def start_server():
     server_socket.bind(('127.0.0.1', port))
 
     # put the socket into listening mode 
-    server_socket.listen(1)
+    server_socket.listen(5)
     print("socket is listenning on port 80 ..")
 
     while True:
         # establish a connection with a client 
         client_socket, client_address = server_socket.accept()
         print(f"got connection from {client_address}")
-        handle_request(client_socket)
+        
+        #creating a new thread to handle the client request
+        client_thread = threading.Thread(target=handle_request, args=(client_socket,))
+        client_thread.start()
         
 if __name__ == "__main__":
     start_server()
 
+    
     
     
     
